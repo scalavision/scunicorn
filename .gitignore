@@ -1,2 +1,4 @@
 *.class
 *.log
+workbench/node_modules
+workbench/yarn.lock
