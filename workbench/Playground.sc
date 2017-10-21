@@ -27,13 +27,14 @@ import scala.concurrent.duration._
         8, 
         ThreadFactories.named("fs2-ag-tcp", true)
       )
-
+/*
 def styles[F[_]](implicit F: Sync[F]) = //: F[Unit] = 
    io.file.readAll[F](
      Paths.get("./out.css"), 4096
    )
+*/
 
-
+/*
 def client[F[_]](
     implicit F: Effect[F],
   ): Stream[F, Unit] = io.tcp.client(
@@ -45,13 +46,11 @@ def client[F[_]](
 
   styles[F].covary[F].chunks.map(socket.writes()).drain.onFinalize(socket.endOfOutput)
 
-  /*
   styles[F].covary[F].chunks.map {
     case ch: Chunk[Byte] =>
       println(ch)
       socket.write(ch)
   }.drain.onFinalize(socket.endOfOutput)
-*/ 
   
   
   //styles[F].covary[F].to(socket.writes())
@@ -62,52 +61,15 @@ def client[F[_]](
 // Stream.chunk(styles[F]).covary[IO].to(socket.writes()) 
  //Stream.chunk("Hello World").covary[IO].to(socket.writes()) 
 
-}
+}*/
 
 println("running")
 
-val c = client[IO].run.unsafeRunAsync(println)//.run.unsafeRunSync()
+//val c = client[IO].run.unsafeRunAsync(println)//.run.unsafeRunSync()
 //c.unsafeRunSync()
-println("socket shutting down")
+//println("socket shutting down")
 
-pprint.pprintln(c)
+//pprint.pprintln(c)
 
-tcpACG.shutdownNow
+//tcpACG.shutdownNow
 
-println("finished")
-
-     
-     //.chunks.map { case ch: Chunk[Byte] =>
-/*
-   io.file.readAll[F](
-     Paths.get("./out.css"), 4096
-   ).chunks.map { case ch: Chunk[Byte] =>
-     socket.write(ch)
-     */
-  // }.drain.onFinalize.drain.onFinalize(socket.endOfOutput)
-//     .flatMap {
-//     case ch: Chunk[Byte] => 
-//      socket.write(ch)
-//   }.run
-
-/*
-def converter[F[_]](implicit F: Sync[F]): F[Unit] =
-  io.file.readAll[F](Paths.get("./out.css"), 4096)
-    .through(IO{ println })
-    .runLog
-
-converter[IO].unsafeRunSync()
-*/
-
-    /*
-    .through(text.utf8Decode)
-    .through(text.lines)
-    .filter(s => !s.trim.isEmpty && !s.startsWith("//"))
-    .map(line => fahrenheitToCelsius(line.toDouble).toString)
-    .intersperse("\n")
-    .through(text.utf8Encode)
-    .through(io.file.writeAll(Paths.get("testdata/celsius.txt")))
-    .run */
-
-// at the end of the universe...
-// val u: Unit = converter[IO].unsafeRunSync()

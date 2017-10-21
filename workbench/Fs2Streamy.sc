@@ -22,12 +22,6 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
 
-val so = fs2.tcp.client(
-    new InetSocketAddress("127.0.0.1", 5000)
-  )
-
-
-
 
 // val test[F[_]] = Stream(1).runLog.unsafeRun
 
