@@ -1,0 +1,18 @@
+a:link {
+ transition: all .5s linear 0; 
+}
+
+a:hover {
+  color: hsla(36,100%,50%,0.8); 
+}
+
+a {
+  color: rgba(255,0,0,.5);
+  transition-property: color;
+  transition-duration: .3s;
+  transition-timing-function: linear;
+}
+
+:fullscreen a {
+  display: flex;
+}

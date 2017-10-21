@@ -21,7 +21,12 @@ server.on('connection', function(socket) {
   });
   */
 
+  console.log('someone is connecting ...');
+
   socket.on('data', function(data) {
+    
+//    console.log('receiving data ...');
+
     socket.setEncoding('utf8');
 
     // should only be 1 line at a time
@@ -32,6 +37,7 @@ server.on('connection', function(socket) {
           result.warnings().forEach(function (warn) {
             console.warn(warn.toString());
           }); 
+ //         console.log('returning: ' + result.css); 
           socket.write(result.css);
     });
 
