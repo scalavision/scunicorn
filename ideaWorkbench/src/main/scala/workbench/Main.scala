@@ -12,6 +12,7 @@ import fs2.io.tcp.Socket
 
 import scala.concurrent.ExecutionContext
 
+/*
 object Main extends App {
   import ExecutionContextExecutorServiceBridge._
 
@@ -70,6 +71,6 @@ object Main extends App {
 
   val s = Stream(1,2,3,4)
 
-  s.to(mySink[IO, Int])
+//  s.to(mySink[IO, Int])
 
-}
+}*/

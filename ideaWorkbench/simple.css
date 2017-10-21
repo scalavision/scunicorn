@@ -16,3 +16,14 @@ a {
 :fullscreen a {
   display: flex;
 }
+
+
+@media (max-color : 10) {
+  
+.intro > ul {
+  outline: double;
+  outline: dashed;
+  outline: double;
+}
+
+}           

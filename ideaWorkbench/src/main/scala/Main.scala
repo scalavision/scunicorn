@@ -18,31 +18,41 @@ private val utf8Charset = Charset.forName("UTF-8")
   /** Transforms a stream of `String` such that each emitted `String` is a line from the input. */
   def cssBlocks[F[_]]: Pipe[F, String, String] = {
 
-    def linesFromString(string: String, foundSoFar: String): (Vector[String], String) = {
+
+
+    def linesFromString(string: String, collectedCssInBlock: String): (Vector[String], String) = {
+
       var i = 0
       var start = 0
       var out = Vector.empty[String]
+
+      def count(openOrCloseBracket: Char) =
+        collectedCssInBlock.count(_ == openOrCloseBracket) +
+          string.substring(start, i).count(_ == openOrCloseBracket) +
+          out.headOption.fold(0)(s => s.count(_ == openOrCloseBracket))
+
       while (i < string.size) {
+
         string(i) match {
-//          case '{' =>
-//            println("found one ..." + i)
-//            ()
+
           case '}' =>
-            val nrOfOpenBlock =
-              foundSoFar.count(_ == '{') +
-                string.substring(start, i).count(_ == '{') +
-                out.headOption.fold(0)(s => s.count(_ == '{'))
-            println(nrOfOpenBlock)
-            out = out :+ string.substring(start, i + 1) //:+ string.substring(i - 1, i)
-            start = i + 1
+
+            if(count('{') == count('}') + 1) {
+              out = out :+ string.substring(start, i + 1).trim() //:+ string.substring(i - 1, i)
+              start = i + 1
+            }
+            else {
+              ()
+            }
+
           case c =>
             ()
         }
+
         i += 1
       }
       val carry = string.substring(start, string.size)
-//      pprint.pprintln(out)
-      (out, carry)
+      (out, carry.trim())
     }
 
     def extractLines(buffer: Vector[String], chunk: Chunk[String], pendingLineFeed: Boolean): (Chunk[String], Vector[String], Boolean) = {
@@ -55,16 +65,17 @@ private val utf8Charset = Charset.forName("UTF-8")
           if (pendingLineFeed) {
             if (next.headOption == Some('}')) {
               val out = (buffer.init :+ buffer.last.init).mkString
-              loop(next.tail +: remainingInput.tail, Vector.empty, output :+ out, false)
+              loop(next.tail +: remainingInput.tail, Vector.empty, output :+ out, pendingLineFeed = false)
             } else {
-              loop(remainingInput, buffer, output, false)
+              loop(remainingInput, buffer, output, pendingLineFeed = false)
             }
           } else {
-            val (out, carry) = linesFromString(next, if(buffer.isEmpty) "" else buffer.last)
+            val (out, carry) = linesFromString(next, if(buffer.isEmpty) "" else buffer.mkString)
             val pendingLF = if (carry.nonEmpty) carry.last == '}' else pendingLineFeed
             loop(remainingInput.tail,
               if (out.isEmpty) buffer :+ carry else Vector(carry),
-              if (out.isEmpty) output else output ++ ((buffer :+ out.head).mkString +: out.tail), pendingLF)
+              if (out.isEmpty) output else output ++ ((buffer :+ out.head).mkString +: out.tail), pendingLF
+            )
           }
         }
       }
