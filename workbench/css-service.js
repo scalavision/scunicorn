@@ -18,14 +18,9 @@ server.on('connection', function(socket) {
 
   socket.on('end', function(){
     console.log('disconnecting');
-//    unhookStdout();
   });
 
-  console.log('someone is connecting ...');
-
   socket.on('data', function(data) {
-    
-    console.log('receiving data ...');
 
     socket.setEncoding('utf8');
 
@@ -37,7 +32,6 @@ server.on('connection', function(socket) {
           result.warnings().forEach(function (warn) {
             console.warn(warn.toString());
           }); 
-          console.log('returning: ' + result.css); 
           socket.write(result.css);
     });
 

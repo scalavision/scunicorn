@@ -15,37 +15,11 @@ import iolib.util.Resources.mkThreadFactory
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 
-/*
-val q = {
-      val res = for {
-        a <- server[Task](skt)
-        b <- Stream.emit(a.flatMap(socket =>
-socket.reads(1024).to(socket.writes()).onFinalize(socket.endOfOutput)))
-      } yield b
-      concurrent.join(Int.MaxValue)(res)
-    }
-
-    println("about to start ...")
-    q.drain.runLog.unsafeRun()
- */
-
-/*
-val signal = Signal[Task, Boolean](false).flatMap { sig =>
-  val server: Stream[Task, Message] = UdpServer.flow(Stream.emit(feeds), Some(sig))
-  val client: Stream[Task, Unit] = sig.discrete.changes.flatMap(_ =>
-    fs2.io.udp.open[Task]().evalMap {
-      _.write(Packet(new InetSocketAddress("localhost", 1234), Chunk.bytes("this is the application".getBytes)))
-    }
-  )
-  server.mergeDrainR(client).take(1).runLog
-}.unsafeRun()
- */
-
 object Main extends App {
 
 private val utf8Charset = Charset.forName("UTF-8")
 
-  val src = io.file.readAll[IO](Paths.get("simple.css"), 16)
+  val src: Stream[IO, Byte] = io.file.readAll[IO](Paths.get("simple.css"), 16)
 
   val buf = new scala.collection.mutable.ListBuffer[String]()
 
@@ -74,52 +48,28 @@ private val utf8Charset = Charset.forName("UTF-8")
     )
   )
 
-  val localBindAddress = async.ref[IO, InetSocketAddress].unsafeRunSync()
+  val cssServer: Stream[IO, Byte] =
+    tcp.server[IO](new InetSocketAddress("127.0.0.1", 5001).flatMap { socket =>
 
-  val clientCount = 1
+      ???
 
-  // TODO: try to implement the same function as the HttpClient request method
+    }
 
-  val clients = {
-    Stream.range(0, clientCount).covary[IO].map { idx =>
-      Stream.eval(localBindAddress.get).flatMap { local =>
-        tcp.client[IO](local).flatMap { socket =>
-
-//          Stream.emit(css.covary[IO].to(socket.writes()).onFinalize(socket.endOfOutput).run.attempt flatMap {
-//            case Left(err) => throw new Exception("failed")
-//            case Right(()) => IO.pure(())
-//          })
-
-//          css.chunks.map { c =>
-//            socket.write(c)
-//          }.run.unsafeRunSync()
-
-          css.covary[IO].to(socket.writes()).drain.onFinalize(socket.endOfOutput) ++
-            socket.reads(1024, None).chunks.map(_.toArray)
-        }
-      }
-    }.join(1)
-  }
-
-
-  val cssClient: Stream[IO, Array[Byte]] =
-
+  val cssClient: Stream[IO, Byte] =
       tcp.client[IO]( new InetSocketAddress("127.0.0.1", 5000) ).flatMap { socket =>
-        css.covary[IO].to(socket.writes()).drain.onFinalize(socket.endOfOutput)
+        css.covary[IO].to(socket.writes()).drain.onFinalize(socket.endOfOutput) ++
+          socket.reads(1024, None)
       }
 
+  val logProcessedCss: Sink[IO, String]  =
+    _.evalMap { a => IO { println(a) } }
 
-//    Stream.eval(localBindAddress.get).flatMap { local =>
-//      tcp.client[IO]( local ).flatMap { socket =>
-//        css.covary[IO].to(socket.writes()).drain.onFinalize(socket.endOfOutput) ++
-//          socket.reads(1024, None).chunks.map(_.toArray)
-//      }
-//    }
+  val program = cssClient.through(text.utf8Decode).through(cssBlocks).to(logProcessedCss)
 
-
-  //println(Stream(clients).join(1).take(clientCount).runLog.unsafeRunTimed(4 seconds))
+  program.run.unsafeRunSync()
 
 
-  pprint.pprintln(cssClient.run.unsafeRunSync())
+
+
 
 }

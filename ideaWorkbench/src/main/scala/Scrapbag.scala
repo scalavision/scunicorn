@@ -178,4 +178,67 @@ object Scrapbag {
 
   //write(css).run.unsafeRunSync()
   */
+
+
+  // Tcp client example from the Specs :
+
+  /*
+
+
+  val localBindAddress = async.ref[IO, InetSocketAddress].unsafeRunSync()
+
+  val clientCount = 1
+
+  val clients = {
+    Stream.range(0, clientCount).covary[IO].map { idx =>
+      Stream.eval(localBindAddress.get).flatMap { local =>
+        tcp.client[IO](local).flatMap { socket =>
+          css.covary[IO].to(socket.writes()).drain.onFinalize(socket.endOfOutput) ++
+            socket.reads(1024, None).chunks.map(_.toArray)
+        }
+      }
+    }.join(1)
+  }
+
+
+
+  //    Stream.eval(localBindAddress.get).flatMap { local =>
+//      tcp.client[IO]( local ).flatMap { socket =>
+//        css.covary[IO].to(socket.writes()).drain.onFinalize(socket.endOfOutput) ++
+//          socket.reads(1024, None).chunks.map(_.toArray)
+//      }
+//    }
+   */
+
+  // Example using Sinc:
+
+  /*
+
+/*
+val q = {
+      val res = for {
+        a <- server[Task](skt)
+        b <- Stream.emit(a.flatMap(socket =>
+socket.reads(1024).to(socket.writes()).onFinalize(socket.endOfOutput)))
+      } yield b
+      concurrent.join(Int.MaxValue)(res)
+    }
+
+    println("about to start ...")
+    q.drain.runLog.unsafeRun()
+ */
+
+/*
+val signal = Signal[Task, Boolean](false).flatMap { sig =>
+  val server: Stream[Task, Message] = UdpServer.flow(Stream.emit(feeds), Some(sig))
+  val client: Stream[Task, Unit] = sig.discrete.changes.flatMap(_ =>
+    fs2.io.udp.open[Task]().evalMap {
+      _.write(Packet(new InetSocketAddress("localhost", 1234), Chunk.bytes("this is the application".getBytes)))
+    }
+  )
+  server.mergeDrainR(client).take(1).runLog
+}.unsafeRun()
+ */
+
+   */
 }
