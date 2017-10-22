@@ -15,17 +15,17 @@ server.listen(5000, function() {
 });
 
 server.on('connection', function(socket) {
-/*
+
   socket.on('end', function(){
-    unhookStdout();
+    console.log('disconnecting');
+//    unhookStdout();
   });
-  */
 
   console.log('someone is connecting ...');
 
   socket.on('data', function(data) {
     
-//    console.log('receiving data ...');
+    console.log('receiving data ...');
 
     socket.setEncoding('utf8');
 
@@ -37,7 +37,7 @@ server.on('connection', function(socket) {
           result.warnings().forEach(function (warn) {
             console.warn(warn.toString());
           }); 
- //         console.log('returning: ' + result.css); 
+          console.log('returning: ' + result.css); 
           socket.write(result.css);
     });
 
