@@ -16,6 +16,8 @@ server.listen(5000, function() {
 
 server.on('connection', function(socket) {
 
+  console.log('connecting..');
+
   socket.on('end', function(){
     console.log('disconnecting');
   });
@@ -27,11 +29,14 @@ server.on('connection', function(socket) {
     // should only be 1 line at a time
     data = data.toString().replace(/(\r\n|\n|\r)/gm,"");
 
+    console.log('received data');
+
     postcss( [ autoprefixer ({ browsers: ['last 4 version'] }) ] )
       .process(data).then(function(result){
           result.warnings().forEach(function (warn) {
             console.warn(warn.toString());
           }); 
+          console.log("result:" + result.css);
           socket.write(result.css);
     });
 

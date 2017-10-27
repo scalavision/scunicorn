@@ -7,8 +7,6 @@ object CssStreamHandler {
   /** Transforms a stream of `String` such that each emitted `String` is a line from the input. */
   def cssBlocks[F[_]]: Pipe[F, String, String] = {
 
-
-
     def linesFromString(string: String, collectedCssInBlock: String): (Vector[String], String) = {
 
       var i = 0
@@ -74,6 +72,8 @@ object CssStreamHandler {
     def go(buffer: Vector[String], pendingLineFeed: Boolean, s: Stream[F, String]): Pull[F, String, Option[Unit]] = {
       s.pull.unconsChunk.flatMap {
         case Some((chunk, s)) =>
+          println("got some ...")
+          pprint.pprintln(chunk.toString())
           val (toOutput, newBuffer, newPendingLineFeed) = extractLines(buffer, chunk, pendingLineFeed)
           Pull.output(toOutput) >> go(newBuffer, newPendingLineFeed, s)
         case None if buffer.nonEmpty => Pull.output1(buffer.mkString) >> Pull.pure(None)
