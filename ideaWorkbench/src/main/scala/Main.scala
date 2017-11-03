@@ -107,31 +107,15 @@ private val utf8Charset = Charset.forName("UTF-8")
     serverWithLocalAddress[IO](new InetSocketAddress(InetAddress.getByName(null), 5001)).flatMap {
       case Left(local) => Stream.eval_(localBindAddress.setAsyncPure(local))
       case Right(s) =>
-        // socket.reads(1024).to(socket.writes()).onFinalize(socket.endOfOutput)
-
         Stream.emit(s.flatMap { socket =>
-
-//          val rrr: Stream[IO, Byte] = socket.reads(1024)
-//            .through(text.utf8Decode andThen cssBlocks)
-//            .through(log("after blocks"))
-//            .through(text.utf8Encode)
-//
-//          val result: Stream[IO, Byte] = postProcessCss(rrr)
-
           for {
             css <- socket.reads(1024).through(text.utf8Decode andThen cssBlocks)
             _ <- Stream(css).covary[IO].through(log("info: "))
             cssProcessed <- postProcessCss(Stream(css).through(text.utf8Encode))
             _ = println(cssProcessed)
-            _ <- Stream(cssProcessed).covary[IO].to(socket.writes()).drain.onFinalize(socket.endOfOutput)
+            _ <- Stream(cssProcessed).covary[IO].to(socket.writes())
           } yield cssProcessed
-
-//          println(result.through(log("result: ")).runLog.unsafeRunSync())
-//
-//          result.to(socket.writes()).drain.onFinalize(socket.endOfOutput)
-
         })
-
     }.joinUnbounded
 
   val cssClient: Stream[IO, Byte] =
