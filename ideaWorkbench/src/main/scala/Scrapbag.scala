@@ -212,7 +212,7 @@ object Scrapbag {
 
   // Example using Sinc:
 
-  /*
+
 
 /*
 val q = {
@@ -240,5 +240,69 @@ val signal = Signal[Task, Boolean](false).flatMap { sig =>
 }.unsafeRun()
  */
 
-   */
+
+  /**
+
+  Signals and stuff
+
+
+
+  val a = Stream.range(0,10).covary[IO].through(randomDelays(1 second)).through(log("A"))
+  val b = Stream.range(0,10).covary[IO].through(randomDelays(2 seconds)).through(log("B"))
+  val c = Stream.range(0,10).covary[IO].through(randomDelays(1 seconds)).through(log("C"))
+
+  // A will allways wait for B before continueing
+//  val program = (a interleave b).through(log("interleaved"))
+
+//  val program = (a merge b).through(log("merged"))
+
+  //val program = (a either b).through(log("either"))
+
+  // Stream of Streams:
+  // val streams: Stream[IO, Stream[IO, Int]] = Stream(a,b,c)
+
+  // Ten streams, with inner streams of 10 items running concurrently
+  val streams = Stream.range(0,10).map { id =>
+    Stream.range(1,10).covary[IO].through(randomDelays(1 second)).through(log(('A' + id).toChar.toString))
+  }
+
+  // Running only three streams at the same time
+//  val program = streams.join(3).through(log("joined"))
+//  program.run.unsafeRunSync()
+
+
+  val x = async.signalOf[IO, Int](1)
+
+  // To get the signal wrapped in an effect
+  val exe: IO[Int] = x.flatMap { x1: Signal[IO,Int] => x1.get }
+
+  // we can also create a single element stream, using eval
+  val s1: Stream[IO, Signal[IO, Int]] = Stream.eval(x)
+
+  // create a signal and return all changes that has been done to this signal
+  val s1Listen: Stream[IO, Int] = Stream.eval(x).flatMap { x1 => x1.discrete }
+
+  // IO describes a computation, IO describes a way to generate the wanted value (most oftenly?) using a side effect)
+
+  // Cheating to demonstrate the way signal works, let's do the unsafeRun to get our signal
+  val signal = x.unsafeRunSync()
+
+  signal.discrete.through(log("signal > ")).run.unsafeRunAsync(println)
+
+  pprint.pprintln(signal.set(2).unsafeRunSync())
+
+  pprint.pprintln(signal.modify(_ + 1).unsafeRunSync())
+
+  pprint.pprintln(signal.continuous.take(5))
+
+  // It will be signaled on every write to the value
+  signal.set(3).unsafeRunSync()
+  signal.set(4).unsafeRunSync()
+  signal.set(5).unsafeRunSync()
+
+  //program.run.unsafeRunAsync(println)
+  println("hello world finished")
+
+  */
+
 }

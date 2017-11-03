@@ -36,7 +36,7 @@ server.on('connection', function(socket) {
           result.warnings().forEach(function (warn) {
             console.warn(warn.toString());
           }); 
-          console.log("result:" + result.css);
+          console.log("result: " + result.css);
           socket.write(result.css);
     });
 

@@ -16,19 +16,11 @@ import iolib.util.Resources.mkThreadFactory
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
+import scala.util.Try
 
 object Main extends App {
 
 private val utf8Charset = Charset.forName("UTF-8")
-
-  val src: Stream[IO, Byte] = io.file.readAll[IO](Paths.get("simple.css"), 16)
-
-  val buf = new scala.collection.mutable.ListBuffer[String]()
-
-  val css =
-    src.through(text.utf8Decode)
-      .through(cssBlocks)
-      .through(text.utf8Encode)
 
   implicit val EC: ExecutionContext = ExecutionContext.fromExecutor(
     Executors.newFixedThreadPool(
@@ -50,40 +42,97 @@ private val utf8Charset = Charset.forName("UTF-8")
     )
   )
 
+  val src: Stream[IO, Byte] = io.file.readAll[IO](Paths.get("simple.css"), 16)
+
+  val buf = new scala.collection.mutable.ListBuffer[String]()
+
+  def delay[A](sleepTime: FiniteDuration): Pipe[IO, A, A] = _.flatMap { a =>
+    Sch.delay(Stream.eval(IO(a)), sleepTime)
+  }
+
+  val css =
+    src.through(text.utf8Decode)
+      .through(cssBlocks)
+      .through(text.utf8Encode)
+
   val localBindAddress = async.ref[IO, InetSocketAddress].unsafeRunSync()
 
   def postProcessCss(s: Stream[IO, Byte]): Stream[IO, Byte] =
     tcp.client[IO](new InetSocketAddress("127.0.0.1", 5000)).flatMap { socket =>
-      s.covary[IO].to(socket.writes()).drain.onFinalize(socket.endOfOutput) ++
-        socket.reads(1024, None)
+      s.to(socket.writes()).drain.onFinalize(socket.endOfOutput) ++ socket.reads(1024, None)
     }
 
-  val cssStream: IO[Signal[IO, String]] = async.signalOf[IO, String]("")
+//  def pC: Pipe[IO, Chunk[Byte], Byte] = _.evalMap { c =>
+//
+//    IO {
+//      tcp.client[IO](new InetSocketAddress("127.0.0.1", 5000)).flatMap { socket =>
+//        socket.write(c); socket.reads(1024, None)
+//      }
+//    }
+//  }
 
+//  def postProcessCssOld2: Pipe[IO, String, Byte] = _.flatMap { (s: String) =>
+//
+//    tcp.client[IO](new InetSocketAddress("127.0.0.1", 5000)).flatMap { socket =>
+//      Stream.emit(socket.write(Chunk.array(s.getBytes))) ++ socket.reads(1024, None)
+//    }
+//  }
+//
+//  val client = tcp.client[IO](new InetSocketAddress("127.0.0.1", 5000))
 
- def cssPush: Pipe[IO, String, String] = ???
-//   _.evalMap { s => cssStream.flatMap { so => so.discrete.throughPure(logPipe)} }
+//  val cssPush: Pipe[IO, String, String] = _.evalMap { s =>
+//    cssBlockQueue.evalMap { q => q.enqueue1(s) }
+//    IO { s }
+//  }
 
+  val queue = Stream.eval(async.unboundedQueue[IO, String])
 
-   //_.evalMap { a => IO { println(a); a }}
+  def pushCss(s: String): Stream[IO, Unit] = for {
+    q <- queue
+    _ <- Stream(s).covary[IO].to(q.enqueue)
+    _ <- q.dequeue.through(log("testi t: ")).drain
+  } yield ()
 
-  val echoServer: Stream[IO, Byte] = {
+  val monitor: Stream[IO, Nothing] = queue.flatMap { q =>
+    println("inside monitor ...")
+    q.dequeue.through(log("monitor of queue: >")).drain
+  }
+
+  val pushHelper: Pipe[IO, String, String] = _.flatMap { s =>
+    println("helping with push ...")
+    IO { pushCss(s)} ; Stream.eval(IO(s))
+  }
+
+  val echoServer: Stream[IO, Byte] =
     serverWithLocalAddress[IO](new InetSocketAddress(InetAddress.getByName(null), 5001)).flatMap {
       case Left(local) => Stream.eval_(localBindAddress.setAsyncPure(local))
       case Right(s) =>
+        // socket.reads(1024).to(socket.writes()).onFinalize(socket.endOfOutput)
+
         Stream.emit(s.flatMap { socket =>
-          socket.reads(1024)
-            .through(text.utf8Decode)
-            .through(cssBlocks)
-            .through(text.utf8Encode)
-            .through(postProcessCss)
-            .through(text.utf8Decode)
-            .through(logPipe)
-            .through(cssPush)
-            .drain.onFinalize(socket.endOfOutput)
+
+//          val rrr: Stream[IO, Byte] = socket.reads(1024)
+//            .through(text.utf8Decode andThen cssBlocks)
+//            .through(log("after blocks"))
+//            .through(text.utf8Encode)
+//
+//          val result: Stream[IO, Byte] = postProcessCss(rrr)
+
+          for {
+            css <- socket.reads(1024).through(text.utf8Decode andThen cssBlocks)
+            _ <- Stream(css).covary[IO].through(log("info: "))
+            cssProcessed <- postProcessCss(Stream(css).through(text.utf8Encode))
+            _ = println(cssProcessed)
+            _ <- Stream(cssProcessed).covary[IO].to(socket.writes()).drain.onFinalize(socket.endOfOutput)
+          } yield cssProcessed
+
+//          println(result.through(log("result: ")).runLog.unsafeRunSync())
+//
+//          result.to(socket.writes()).drain.onFinalize(socket.endOfOutput)
+
         })
+
     }.joinUnbounded
-  }
 
   val cssClient: Stream[IO, Byte] =
       tcp.client[IO]( new InetSocketAddress("127.0.0.1", 5000) ).flatMap { socket =>
@@ -91,35 +140,22 @@ private val utf8Charset = Charset.forName("UTF-8")
           socket.reads(1024, None)
       }
 
-//  val cssQueue = async.signalOf[IO, Byte](echoServer)(EC)
+//  val program =
+//    cssClient.through(text.utf8Decode).through(cssBlocks).to(logProcessedCss)
 
-  val logProcessedCss: Sink[IO, String]  =
-    _.evalMap { a => IO { println(a) } }
+  val program = echoServer
 
-  val logPipe : Pipe[IO, String, String] =
-    _.evalMap { a => IO { println(a); a }}
+//  val shutdown: Sink[IO, Unit] = _.evalMap { s =>
+//    IO { AG.shutdownNow() }
+//  }
 
-//  val program = cssClient.through(text.utf8Decode).through(cssBlocks).to(logProcessedCss)
+  program.run.unsafeRunSync()
 
-//  val program = echoServer
-
-//  program.run.unsafeRunSync()
+//  program.run.unsafeRunAsync(println)
 
   def log[A](prefix: String): Pipe[IO, A, A] =
     _.evalMap{ s => IO { println(s"$prefix" + s.toString);s}}
 
 
-  def randomDelays[A](max: FiniteDuration): Pipe[IO, A, A] = _.flatMap { a =>
-    Sch.delay(Stream.eval(IO(a)), max)
-  }
-
-  val program =
-    Stream(1,2,3)
-      .covary[IO]
-      .through(log("> "))
-      .through(randomDelays(5.second))
-      .through(log("finished: "))
-
-  program.run.unsafeRunAsync(println)
 
 }
