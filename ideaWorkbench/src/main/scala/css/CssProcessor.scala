@@ -19,7 +19,7 @@ import scala.concurrent.duration._
 
 object CssProcessor extends App {
 
-private val utf8Charset = Charset.forName("UTF-8")
+  private val utf8Charset = Charset.forName("UTF-8")
 
   implicit val EC: ExecutionContext = ExecutionContext.fromExecutor(
     Executors.newFixedThreadPool(
