@@ -40,13 +40,11 @@ object CssProcessor {
             css <- socket.reads(1024).through(text.utf8Decode andThen cssBlocks)
             _ <- Stream(css).covary[IO].to(log("info"))
             cssProcessed <- postProcessCss(Stream(css).through(text.utf8Encode))
-            // this is not able to run without a runner ...
+            // this is not able to run without a runner ... hmm ..???
             //logging = Stream(cssProcessed).covary[IO].through(text.utf8Decode).through(cssBlocks).to(log("processed")).drain
             _ <- Stream(cssProcessed).through(text.utf8Decode).through(cssBlocks).covary[IO].through(pipeLog("returning")).through(text.utf8Encode).to(socket.writes())
             //_ <- Stream(cssProcessed).covary[IO].to(socket.writes())
           } yield cssProcessed
         })
     }.joinUnbounded
-
-
 }
