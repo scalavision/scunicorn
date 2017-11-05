@@ -4,7 +4,9 @@ val commonSettings = Seq(
   libraryDependencies ++= Seq(
    "co.fs2" %% "fs2-core" % "0.10.0-M6",
     "co.fs2" %% "fs2-io" % "0.10.0-M6"
-  ) ++ DefaultDependencies.UtilSettings.dependencies ++ DefaultDependencies.MetaProgramming.dependencies
+  ) ++ DefaultDependencies.UtilSettings.dependencies ++
+    DefaultDependencies.MetaProgramming.dependencies ++
+    DefaultDependencies.TestSettings.dependencies
 //  keys.fork in Test := false,
 //  keys.parallellExecution := false
 )
