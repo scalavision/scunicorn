@@ -10,3 +10,6 @@ Use the fiddle and look at their Compiler integration with scalajs compiler:
 
 * https://github.com/scalafiddle
 
+Another tool that looks promising is this one:
+
+* https://github.com/Ostrea/Chrome-extension-SBT-plugin
