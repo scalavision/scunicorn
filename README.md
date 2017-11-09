@@ -8,3 +8,5 @@ Use the fiddle and look at their Compiler integration with scalajs compiler:
 
 * https://github.com/scalafiddle/scalafiddle-core/blob/master/compiler-server/src/main/scala/scalafiddle/compiler/Compiler.scala
 
+* https://github.com/scalafiddle
+
