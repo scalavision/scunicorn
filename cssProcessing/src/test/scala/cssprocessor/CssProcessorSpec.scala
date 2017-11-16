@@ -43,7 +43,7 @@ class CssProcessorSpec extends Specification with AfterAll {
        |:display a { display: flex; }
      """.stripMargin
 
-  TODO: https://github.com/scalavision/scunicorn/issues/1
+  //TODO: https://github.com/scalavision/scunicorn/issues/1
   
   "CssProcessor" should {
     "process incoming css raw text" in {
@@ -54,13 +54,20 @@ class CssProcessorSpec extends Specification with AfterAll {
         Sch.sleep[IO](4.seconds) ++ tcp.client[IO](
           new InetSocketAddress("127.0.0.1", 5001)
         ).flatMap { (socket: io.tcp.Socket[IO]) =>
-          Stream(sample1).through(text.utf8Encode).covary[IO].to(socket.writes()).drain.onFinalize(socket.endOfOutput) ++
-            socket.reads(1024, None)
+          Stream(sample1)
+            .through(text.utf8Encode).covary[IO]
+            .to(socket.writes())
+            .drain.onFinalize(socket.endOfOutput) ++
+                socket.reads(1024, None)
         }
       }.collect { case b: Byte => b} // stripping away the scheduler sleep unit thingy
 
       println("starting up the server and sending data  ...")
-      (startServer mergeHaltBoth cssOutput.through(text.utf8Decode andThen CssStreamHandler.cssBlocks).to(log("result"))).run.unsafeRunTimed(10.seconds)
+
+      (startServer mergeHaltBoth cssOutput.through(
+        text.utf8Decode andThen CssStreamHandler.cssBlocks
+      ).to(log("result"))).run.unsafeRunTimed(10.seconds)
+
       println("data processed, finished")
 
       1 === 1

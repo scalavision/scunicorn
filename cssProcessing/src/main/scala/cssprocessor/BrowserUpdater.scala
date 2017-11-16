@@ -23,10 +23,11 @@ object BrowserUpdater {
   val clockStream: Stream[IO, Frame.Text[String]] =
     Sch.delay(Stream.eval(IO { Frame.Text("info from server")}), 1.second)
 
-  def serverEcho(s: Stream[IO, Frame[String]]): Pipe[IO, Frame[String], Frame[String]] = { in =>
-    in.map { _.a }.to(log("serverEcho:")).drain.run.unsafeRunAsync(println)
-    s merge in
-  }
+  def serverEcho(s: Stream[IO, Frame[String]]):
+    Pipe[IO, Frame[String], Frame[String]] = { in =>
+      in.map { _.a }.to(log("serverEcho:")).drain.run.unsafeRunAsync(println)
+      s merge in
+    }
 
   private val server =
     http.server[IO](new InetSocketAddress("127.0.0.1", 9092)) _
