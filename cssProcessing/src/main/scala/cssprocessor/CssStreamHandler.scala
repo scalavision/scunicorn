@@ -73,8 +73,8 @@ object CssStreamHandler {
       s.pull.unconsChunk.flatMap {
         case Some((chunk, s)) =>
           val (toOutput, newBuffer, newPendingLineFeed) = extractLines(buffer, chunk, pendingLineFeed)
-          Pull.output(toOutput) >> go(newBuffer, newPendingLineFeed, s)
-        case None if buffer.nonEmpty => Pull.output1(buffer.mkString) >> Pull.pure(None)
+          Pull.output(toOutput) *> go(newBuffer, newPendingLineFeed, s)
+        case None if buffer.nonEmpty => Pull.output1(buffer.mkString) *> Pull.pure(None)
         case None => Pull.pure(None)
       }
     }

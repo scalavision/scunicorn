@@ -43,9 +43,10 @@ class CssProcessorSpec extends Specification with AfterAll {
        |:display a { display: flex; }
      """.stripMargin
 
-  TODO: https://github.com/scalavision/scunicorn/issues/1
+  //TODO: https://github.com/scalavision/scunicorn/issues/1
 
   "CssProcessor" should {
+
     "process incoming css raw text" in {
 
       val startServer = cssProcessor

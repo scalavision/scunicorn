@@ -70,9 +70,9 @@ fooDecoder.decode(bin"00000000000000000000000000000001")
 
 // Working with simple encode /decode of primitives
 val intCodec = uint16L
-val intAsBitVector = intCodec(10)
+val intAsBitVector = intCodec.encode(10)
 // Decodeing it with our intCodec
-val ourInt = intCodec.decode(intAsBitVector) 
+val ourInt = intCodec.decode(intAsBitVector.require) 
 
 // Correctly encode and decoding string. You need to choose a structure
 // that preserves the size of the string. In this example the size will
@@ -80,7 +80,7 @@ val ourInt = intCodec.decode(intAsBitVector)
 val pair = utf8_32 ~ uint8 
 val encodedPair = pair.encode(("Hello", 42))
 
-val decodePair = encodedPair.decode(encodedPair.require)
+val decodePair = pair.decode(encodedPair.require)
 // to extract the value
 val decodedPairValue = decodePair.require.value
 

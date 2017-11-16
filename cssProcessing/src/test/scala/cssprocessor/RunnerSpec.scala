@@ -29,6 +29,7 @@ class RunnerSpec extends Specification with AfterAll {
   }
 
   "Runner" should {
+
     "provide server api" in {
 
       var received:List[Frame[String]] = Nil

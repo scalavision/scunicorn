@@ -37,11 +37,9 @@ object CssProcessor {
 
   case class CssBlock(id: Int, content: String)
 
-  def frameMaker(prefix: String): Pipe[IO, String, ByteVector] = _.evalMap { s =>
+  def frameMaker(prefix: String): Pipe[IO, String, CssBlock] = _.evalMap { s =>
     val id = s.takeWhile(_ != '{').hashCode
     val b = s.getBytes
-
-
 
     IO { CssBlock(id, s) }
   }

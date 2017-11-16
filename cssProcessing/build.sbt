@@ -23,7 +23,8 @@ val commonSettings = Seq(
   scalacOptions in (Compile, console) ~= {_.filterNot("-Ywarn-unused-import" == _)},
   scalacOptions in (Test, console) <<= (scalacOptions in (Compile, console)),
   libraryDependencies ++= Seq(
-   "com.lihaoyi" %% "ammonite-ops" % "1.0.3"
+   "com.lihaoyi" %% "ammonite-ops" % "1.0.3",
+    "org.scodec" %% "scodec-stream" % "1.1.0-M8"
   ) ++ DefaultDependencies.UtilSettings.dependencies ++
     DefaultDependencies.MetaProgramming.dependencies ++
     DefaultDependencies.TestSettings.dependencies ++
