@@ -46,7 +46,6 @@ import scodec.stream.{encode => E, decode => D, StreamDecoder,StreamEncoder}
   val cssStream: Stream [IO, StyleSheet] = Stream(css).map(create)
 
   def logStylesheet(prefix: String): Sink[IO, StyleSheet] = _.evalMap { s =>
-     
     IO(pprint.pprintln(s"$prefix > " + s))
   }
 
@@ -62,7 +61,3 @@ import scodec.stream.{encode => E, decode => D, StreamDecoder,StreamEncoder}
       .to(logStylesheet("out > "))
 
   encodedStream.run.unsafeRunSync()
-
-  
-
-
