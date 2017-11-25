@@ -45,11 +45,21 @@ import scodec.stream.{encode => E, decode => D, StreamDecoder,StreamEncoder}
 
   val cssStream: Stream [IO, StyleSheet] = Stream(css).map(create)
 
-  def logStylesheet(prefix: String): Sink[IO, ByteVector] = _.evalMap { s =>
+  def logStylesheet(prefix: String): Sink[IO, StyleSheet] = _.evalMap { s =>
+     
     IO(pprint.pprintln(s"$prefix > " + s))
   }
 
-  val encodedStream = streamEncoder.encode { cssStream }.map(_.toByteVector).to(logStylesheet("out > "))
+  val decodePipe: Pipe[IO, ByteVector, StyleSheet] = _.flatMap { bV =>
+    streamDecoder.decode[IO](bV.toBitVector)
+  }
+
+  val encodedStream = 
+    streamEncoder
+      .encode { cssStream }
+      .map(_.toByteVector)
+      .through(decodePipe)
+      .to(logStylesheet("out > "))
 
   encodedStream.run.unsafeRunSync()
 

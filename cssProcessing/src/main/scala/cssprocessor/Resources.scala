@@ -22,7 +22,7 @@ object Resources {
       )
     )
   )
-
+//
   implicit val Sch: Scheduler = Scheduler.fromScheduledExecutorService(
     Executors.newScheduledThreadPool(
       4, mkThreadFactory("fs2-http-spec-scheduler", daemon = true)
