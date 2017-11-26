@@ -77,6 +77,8 @@ val ourInt = intCodec.decode(intAsBitVector.require)
 // Correctly encode and decoding string. You need to choose a structure
 // that preserves the size of the string. In this example the size will
 // be preserved in a 32 bit field preceeding the encoded string content.
+// Instead of using a hardcoded length of 32 bit, you can use other sizes
+// with the variableSizeBytes function
 val pair = utf8_32 ~ uint8 
 val encodedPair = pair.encode(("Hello", 42))
 
